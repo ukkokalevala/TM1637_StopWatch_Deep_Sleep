@@ -1,0 +1,40 @@
+#include <Arduino.h>
+#include <TM1637Display.h>
+#include <esp_sleep.h>
+
+#define CLK 4   // TM1637 CLK pin (change to your wiring)
+#define DIO 5  // TM1637 DIO pin (change to your wiring)
+#define WAKEUP_BUTTON 10  // Use GPIO 4 or GPIO 10 for wake-up
+
+TM1637Display display(CLK, DIO);
+int countdown = 10;  // Countdown in seconds
+
+void IRAM_ATTR wakeUp() {
+  // Empty function; ESP32 will wake up when button is pressed
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    pinMode(WAKEUP_BUTTON, INPUT_PULLUP);
+    attachInterrupt(WAKEUP_BUTTON, wakeUp, FALLING);
+
+    display.setBrightness(0x0F); // Full brightness
+    while (countdown >= 0) {
+        display.showNumberDec(countdown);
+        Serial.print("Countdown: ");
+        Serial.println(countdown);
+        delay(1000);
+        countdown--;
+    }
+
+    Serial.println("Going to Deep Sleep...");
+    display.clear();  // Turn off display
+
+    esp_sleep_enable_gpio_wakeup();  // Enable GPIO wake-up
+    esp_deep_sleep_start(); // Sleep until button press
+}
+
+void loop() {
+    // Never runs, ESP32 is in deep sleep
+}
